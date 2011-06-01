@@ -5,6 +5,9 @@
 Because of the lack of a general and recent php class (api 2.1) for TMDb. The CakePHP class is outdated and doesn't provide you to search for people. With this class you can search and get Movie and People information.  
 The second reason why this class is made is very simple: I love the work they do at [TMDb](http://themoviedb.org). They provide a great API so everyone can use there database to make cool applications.
 
+## Why this fork ##
+If you want to use this class with Codeigniter will you need to do some tweaks and changes, that could be a bit hard. This will make it easier with a stand-alone config-file for configuration.
+
 ## Requirements ##
 
 - PHP 5.2.x or higher
@@ -16,16 +19,19 @@ The second reason why this class is made is very simple: I love the work they do
 ### Initialize the class ###
 
     <?php
-	    include('TMDb.php');
-	    
-	    //'json' is set as default return format
-	    $tmdb = new TMDb('API-key'); //change 'API-key' with yours
-	    
-	    //if you prefer using 'xml'
-	    $tmdb_xml = new TMDb('API-key',TMDb::XML);
-	    
-	    //or even 'yaml'
-	    $tmdb_yaml = new TMDb('API-key',TMDb::YAML);
+		class Tmdb_test extends CI_Controller {
+
+			function __construct() {
+				parent::__construct();
+				$this->load->library('tmdb');
+			}
+
+			function index() {
+				$id = "tt0088247";
+				$json = $this->tmdb->getMovie($id,TMDb::IMDB);
+				print_r(json_decode($json));
+			}
+		}
 	?>
 
 ### Search a Movie ###
@@ -35,10 +41,10 @@ The second reason why this class is made is very simple: I love the work they do
 		$title = 'Orphan';
 		
 		//Search Movie with default return format
-		$xml_movies_result = $tmdb_xml->searchMovie($title);
+		$xml_movies_result = $this->tmdb->searchMovie($title);
 		
 		//Search Movie with other return format than the default
-		$json_movies_result = $tmdb_yaml->searchMovie($title,TMDb::JSON);
+		$json_movies_result = $this->tmdb->searchMovie($title,TMDb::JSON);
     ?>
 
 ### Get a Movie ###
@@ -50,10 +56,10 @@ The second reason why this class is made is very simple: I love the work they do
 		$imdb_id = 'tt0137523';
 		
 		//Get Movie with default return format and with TMDb-id
-		$xml_movie_result = $tmdb_xml->getMovie($tmdb_id);
+		$xml_movie_result = $this->tmdb->getMovie($tmdb_id);
 		
 		//Get Movie with other return format than the default and with an IMDb-id
-		$json_movie_result = $tmdb_yaml->getMovie($imbd_id,TMDb::IMDB,TMDb::JSON);
+		$json_movie_result = $this->tmdb->getMovie($imbd_id,TMDb::IMDB,TMDb::JSON);
     ?>
 
 ### Get a Movie by Hash ###
@@ -66,7 +72,7 @@ You can find more information about movie-hashes on the website from [opensubtit
 		$bytes = '12909756';
 	
       	//Search Movie by hash with default return format
-      	$json_moviehash_result = $tmdb->getMovieByHash($hash, $bytes);
+      	$json_moviehash_result = $this->tmdb->getMovieByHash($hash, $bytes);
     ?>
 
 ### Get Images from a Movie ###
@@ -78,10 +84,10 @@ You can find more information about movie-hashes on the website from [opensubtit
 		$imdb_id = 'tt0137523';
 		
 		//Get Images with default return format and with TMDb-id
-		$xml_movie_result = $tmdb_xml->getImages($tmdb_id);
+		$xml_movie_result = $this->tmdb->getImages($tmdb_id);
 		
 		//Get Images with other return format than the default and with an IMDb-id
-		$json_movie_result = $tmdb_yaml->getImages($imbd_id,TMDb::JSON);
+		$json_movie_result = $this->tmdb->getImages($imbd_id,TMDb::JSON);
     ?>
 
 ### Search a Person ###
@@ -91,10 +97,10 @@ You can find more information about movie-hashes on the website from [opensubtit
 		$name = 'Jack Black';
 		
 		//Search Person with default return format
-		$json_persons_result = $tmdb->searchPerson($name);
+		$json_persons_result = $this->tmdb->searchPerson($name);
 		
 		//Search Person with other return format than the default
-		$xml_persons_result = $tmdb_yaml->getMovie($name,TMDb::XML);
+		$xml_persons_result = $this->tmdb->getMovie($name,TMDb::XML);
 	?>
 
 ### Get a Person ###
@@ -104,10 +110,10 @@ You can find more information about movie-hashes on the website from [opensubtit
 		$person_id = 500;
 		
 		//Get Person with default return format
-		$json_persons_result = $tmdb->getPerson($person_id);
+		$json_persons_result = $this->tmdb->getPerson($person_id);
 		
 		//Search Person with other return format than the default
-		$xml_persons_result = $tmdb_yaml->getPerson($person_id,TMDb::XML);
+		$xml_persons_result = $this->tmdb->getPerson($person_id,TMDb::XML);
 	?>
 
 ### Get version of one or more Movies ###
@@ -119,10 +125,10 @@ You can find more information about movie-hashes on the website from [opensubtit
 		$imdb_id = 'tt0137523';
 
 		//Get version of one movie with default return format and with TMDb-id
-		$xml_movieversion_result = $tmdb_xml->getMovieVersion($tmdb_id);
+		$xml_movieversion_result = $this->tmdb->getMovieVersion($tmdb_id);
 
 		//Get version of multiple movies with other return format than the default
-		$json_movieversions_result = $tmdb_yaml->getMovieVersions(array($imbd_id, $tmdb_id),TMDb::JSON);
+		$json_movieversions_result = $this->tmdb->getMovieVersions(array($imbd_id, $tmdb_id),TMDb::JSON);
 	?>
 
 ### Get version of one or more Persons ###
@@ -133,10 +139,10 @@ You can find more information about movie-hashes on the website from [opensubtit
 		$person_id2 = 300;
 
 		//Get version of one person with default return format and with TMDb-id
-		$xml_personversion_result = $tmdb_xml->getPersonVersion($person);
+		$xml_personversion_result = $this->tmdb->getPersonVersion($person);
 
 		//Get version of multiple persons with other return format than the default
-		$json_personversions_result = $tmdb_yaml->getPersonVersions(array($person_id, $person_id2),TMDb::JSON);
+		$json_personversions_result = $this->tmdb->getPersonVersions(array($person_id, $person_id2),TMDb::JSON);
 	?>
 
 ## Issues/Bugs ##

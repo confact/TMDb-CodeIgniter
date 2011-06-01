@@ -12,7 +12,7 @@
  * @license BSD http://www.opensource.org/licenses/bsd-license.php
  */
 
-class TMDb
+class Tmdb
 {
 	const TMDB = 'Themoviedb.org (TMDb)';
 	const IMDB = 'The Internet Movie Database (IMDb)';
