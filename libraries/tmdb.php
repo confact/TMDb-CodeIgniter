@@ -64,11 +64,13 @@ class TMDb
 	 * @param string $defaultLang				Default language
 	 * @return void
 	 */
-	public function __construct($apikey, $defaultFormat = TMDb::JSON, $defaultLang = 'en')
+	public function __construct()
 	{
-		$this->setApikey($apikey);
-		$this->setFormat($defaultFormat);
-		$this->setLang($defaultLang);
+		$this->_obj =& get_instance();
+		$this->_obj->load->config('tmdb');
+		$this->setApikey($this->_obj->config->item('tmdbapi'));
+		$this->setFormat($this->_obj->config->item('defaultformat'));
+		$this->setLang($this->_obj->config->item('defaultlang'));
 	}
 
 	/**
