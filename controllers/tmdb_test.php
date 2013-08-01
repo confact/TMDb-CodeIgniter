@@ -9,7 +9,7 @@ class Tmdb_test extends CI_Controller {
 
 	function index() {
 		$id = "tt0088247";
-		$json = $this->tmdb->getMovie($id,TMDb::IMDB);
+		$json = $this->tmdb->movieInfo($id);
 		print_r(json_decode($json));
 	}
 }

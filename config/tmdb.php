@@ -1,5 +1,6 @@
 <?php
 
-	$config['tmdbapi'] = "your api";
-	$config['defaultformat'] = TMDb::JSON;
-	$config['defaultlang'] = "en";
+	$config['tmdbapi'] = "YOUR API";
+	$config['tmdbdefaultlang'] = "en";
+    $config['tmdbcachetype'] = "file";
+    $config['tmdbcache'] = TRUE;

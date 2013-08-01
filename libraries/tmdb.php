@@ -1,458 +1,314 @@
 <?php
-/**
- * TMDb PHP API class - API 'themoviedb.org'
- * API Documentation: http://api.themoviedb.org/2.1/
- * Documentation and usage in README file
- *
- * @author Jonas De Smet - Glamorous
- * @since 09.11.2009
- * @date 10.12.2010
- * @copyright Jonas De Smet - Glamorous
- * @version 0.9.10
- * @license BSD http://www.opensource.org/licenses/bsd-license.php
- */
+###########################
+class Tmdb{
+    #<CONSTANTS>
+    #@var string url of API TMDB
+    const _API_URL_ = "http://api.themoviedb.org/3/";
 
-class Tmdb
-{
-	const TMDB = 'Themoviedb.org (TMDb)';
-	const IMDB = 'The Internet Movie Database (IMDb)';
+    #@var string Version of this class
+    const VERSION = '0.0.2';
 
-	const JSON = 'json';
-	const XML = 'xml';
-	const YAML = 'yaml';
+    #@var string API KEY
+    private $_apikey;
 
-	const POST = 'post';
-	const GET = 'get';
+    #@var string Default language
+    private $_lang;
 
-	const API_URL = 'http://api.themoviedb.org/2.1/';
+    #@var string url of TMDB images
+    private $_imgUrl;
+    #</CONSTANTS>
+###############################################################################################################
+    /**
+     * Construct Class
+     * @param string apikey
+     * @param string language default is english
+     */
+    public function  __construct($apikey,$lang='en') {
+        // Load config file
+        $this->_obj =& get_instance();
+        $this->_obj->load->config('tmdb');
 
-	const VERSION = '0.9.10';
+        if($this->_obj->config->item('tmdbcache')) {
+            // Cache need to be fixed
+            $this->_obj->load->driver('cache');
+        }
 
-	/**
-	 * The API-key
-	 *
-	 * @var string
-	 */
-	private $_apikey;
+        //Assign Api Key
+        $this->setApikey($this->_obj->config->item('tmdbapi'));
 
-	/**
-	 * The default return format
-	 *
-	 * @var TMDb::JSON or TMDb::XML or TMDb::YAML
-	 */
-	private $_format;
+        //Setting Language
+        $this->setLang($this->_obj->config->item('tmdbdefaultlang'));
 
-	/**
-	 * The default language
-	 *
-	 * @var string
-	 */
-	private $_lang;
+        //Get Configuration
+        $conf = $this->getConfig();
+        if (empty($conf)){echo "Unable to read configuration, verify that the API key is valid";exit;}
 
-	/**
-	 * The available return formats
-	 *
-	 * @var array
-	 */
-	private $_formats = array(TMDb::JSON, TMDb::XML, TMDb::YAML);
+        //set Images URL contain in config
+        $this->setImageURL($conf);
+    }//end of __construct
 
-	/**
-	 * Default constructor
-	 *
-	 * @param string $apikey					API-key recieved from TMDb
-	 * @param const[optional] $defaultFormat	Default return format
-	 * @param string $defaultLang				Default language
-	 * @return void
-	 */
-	public function __construct()
-	{
-		$this->_obj =& get_instance();
-		$this->_obj->load->config('tmdb');
-		$this->setApikey($this->_obj->config->item('tmdbapi'));
-		$this->setFormat($this->_obj->config->item('defaultformat'));
-		$this->setLang($this->_obj->config->item('defaultlang'));
-	}
+    /** Setter for the API-key
+     * @param string $apikey
+     * @return void
+     */
+    private function setApikey($apikey) {
+        $this->_apikey = (string) $apikey;
+    }//end of setApikey
 
-	/**
-	 * Search a movie by title
-	 *
-	 * @param string $title						Title to search after in the TMDb database
-	 * @param const[optional] $format			Return format for this function
-	 * @return string
-	 */
-	public function searchMovie($title, $format = null)
-	{
-		return $this->_makeCall('Movie.search', $title, $format);
-	}
+    /** Getter for the API-key
+     *  no input
+     **  @return string
+     */
+    private function getApikey() {
+        return $this->_apikey;
+    }//end of getApikey
 
-	/**
-	 * Get a movie by TMDb-id or IMDb-id
-	 *
-	 * @param string $id						TMDb-id or IMDb-id
-	 * @param const[optional] $type				For use with IMDb-id you have to change this parameter to TMDb::IMDB
-	 * @param const[optional] $format			Return format for this function
-	 * @return string
-	 */
-	public function getMovie($id, $type = TMDb::TMDB, $format = null)
-	{
-		if($type == TMDb::IMDB)
-		{
-			return $this->_makeCall('Movie.imdbLookup', $id, $format);
-		}
-		else
-		{
-			return $this->_makeCall('Movie.getInfo', $id, $format);
-		}
-	}
+    /** Setter for the default language
+     * @param string $lang
+     * @return void
+     **/
+    public function setLang($lang="en") {
+        $this->_lang = $lang;
+    }//end of setLang
 
-	/**
-	 * Get a movie by hash
-	 *
-	 * @param string $hash						Hash
-	 * @param string $bytesize					Bitesize
-	 * @param const[optional] $format			Return format for this function
-	 * @return string
-	 */
-	public function getMovieByHash($hash, $bytesize, $format = null)
-	{
+    /** Getter for the default language
+     * no input
+     * @return string
+     **/
+    public function getLang() {
+        return $this->_lang;
+    }//end of getLang
 
-		return $this->_makeCall('Media.getInfo', $hash.'/'.$bytesize, $format);
-	}
+    /**
+     * Set URL of images
+     * @param  $config Configurarion of API
+     * @return array
+     */
+    public function setImageURL($config) {
+        $this->_imgUrl = (string) $config['images']["base_url"];
+    } //end of setImageURL
 
-	/**
-	 * Get images by the TMDb-id or IMDb-id
-	 *
-	 * @param string $id						Movie TMDb-id or IMDb-id
-	 * @param const[optional] $format			Return format for this function
-	 * @return string
-	 */
-	public function getImages($id, $format = null)
-	{
-		return $this->_makeCall('Movie.getImages', $id, $format);
-	}
+    /** Getter for the URL images
+     * no input
+     * @return string
+     */
+    public function getImageURL($size="original") {
+        return $this->_imgUrl . $size;
+    }//end of getImageURL
 
-	/**
-	 * Search a person by name
-	 *
-	 * @param string $name						Name to search after in the TMDb database
-	 * @param const[optional] $format			Return format for this function
-	 * @return string
-	 */
-	public function searchPerson($name, $format = null)
-	{
-		return $this->_makeCall('Person.search', $name, $format);
-	}
+    /**
+     * movie Alternative Titles
+     * http://api.themoviedb.org/3/movie/$id/alternative_titles
+     * @param array  titles
+     */
+    public function movieTitles($idMovie) {
+        $titleTmp = $this->movieInfo($idMovie,"alternative_titles",false);
+        foreach ($titleTmp['titles'] as $titleArr){
+            $title[]=$titleArr['title']." - ".$titleArr['iso_3166_1'];
+        }
+        return $title;
+    }//end of movieTitles
 
-	/**
-	 * Get a person by his TMDb-id
-	 *
-	 * @param string $id						Persons TMDb-id
-	 * @param const[optional] $format			Return format for this function
-	 * @return string
-	 */
-	public function getPerson($id, $format = null)
-	{
-		return $this->_makeCall('Person.getInfo', $id, $format);
-	}
+    /**
+     * movie translations
+     * http://api.themoviedb.org/3/movie/$id/translations
+     * @param array  translationsInfo
+     */
+    public function movieTrans($idMovie)
+    {
+        $transTmp = $this->movieInfo($idMovie,"translations",false);
 
-	/**
-	 * Get a Movie-version by its TMDb-id or IMDB-id
-	 *
-	 * @param string $id						Movie TMDb-id or IMDB-id
-	 * @param const[optional] $format			Return format for this function
-	 * @return string
-	 */
-	public function getMovieVersion($id, $format = null)
-	{
-		return $this->_makeCall('Movie.getVersion', $id, $format);
-	}
+        foreach ($transTmp['translations'] as $transArr){
+            $trans[]=$transArr['english_name']." - ".$transArr['iso_639_1'];
+        }
+        return $trans;
+    }//end of movieTrans
 
-	/**
-	 * Get multiple Movie-versions by their TMDb-id or IMDB-id
-	 *
-	 * @param array $ids						Array with Movie TMDb-id's or IMDB-id's
-	 * @param const[optional] $format			Return format for this function
-	 * @return string
-	 */
-	public function getMovieVersions(array $ids, $format = null)
-	{
-		return $this->_makeCall('Movie.getVersion', implode(',', $ids), $format);
-	}
+    /**
+     * movie Trailer
+     * http://api.themoviedb.org/3/movie/$id/trailers
+     * @param array  trailerInfo
+     */
+    public function movieTrailer($idMovie) {
+        $trailer = $this->movieInfo($idMovie,"trailers",false);
+        return $trailer;
+    } //movieTrailer
 
-	/**
-	 * Get a Person-version by its TMDb-id
-	 *
-	 * @param string $id						Person TMDb-id
-	 * @param const[optional] $format			Return format for this function
-	 * @return string
-	 */
-	public function getPersonVersion($id, $format = null)
-	{
-		return $this->_makeCall('Person.getVersion', $id, $format);
-	}
 
-	/**
-	 * Get multiple Person-versions by their TMDb-id
-	 *
-	 * @param array $ids						Array with Person TMDb-id's
-	 * @param const[optional] $format			Return format for this function
-	 * @return string
-	 */
-	public function getPersonVersions(array $ids, $format = null)
-	{
-		return $this->_makeCall('Person.getVersion', implode(',', $ids), $format);
-	}
+    /**
+     * movie Detail
+     * http://api.themoviedb.org/3/movie/$id
+     * @param array  movieDetail
+     */
+    public function movieDetail($idMovie)
+    {
+        return $this->movieInfo($idMovie,"",false);
+    }//end of movieDetail
 
-	/**
-	 * Browse movies to get a list ordered by rating/release/title
-	 *
-	 * @param string $order_by					Order by rating, release or title
-	 * @param string $order						Order asc or desc
-	 * @param array[optional] $params			Key => value pairs for optional parameters
-	 * @param const[optional] $format			Return format for this function
-	 * @return mixed
-	 */
-	public function browseMovies($order_by, $order, $params = array(), $format = null)
-	{
-		$order_by_container = array('rating','release','title');
-		$order_container = array('asc','desc');
+    /**
+     * movie Poster
+     * http://api.themoviedb.org/3/movie/$id/images
+     * @param array  moviePoster
+     */
+    public function moviePoster($idMovie)
+    {
+        $posters = $this->movieInfo($idMovie,"images",false);
+        $posters =$posters['posters'];
+        return $posters;
+    }//end of
 
-		if(in_array($order_by, $order_by_container) AND in_array($order, $order_container))
-		{
-			$params['order_by'] = $order_by;
-			$params['order'] = $order;
-			return $this->_makeCall('Movie.browse', $params, $format);
-		}
-		else
-		{
-			return FALSE;
-		}
-	}
+    /**
+     * movie Casting
+     * http://api.themoviedb.org/3/movie/$id/casts
+     * @param array  movieCast
+     */
+    public function movieCast($idMovie, $justNames = FALSE)
+    {
+        $castingTmp = $this->movieInfo($idMovie,"casts",false);
+        $casting = array();
+        if($justNames) {
+            foreach ($castingTmp['cast'] as $castArr){
+                $casting[]=array("name" => $castArr['name'], "id" => $castArr['id']);
+            }
+        }
+        else {
+            foreach ($castingTmp['cast'] as $castArr){
+                $casting[$castArr['character']]=$castArr['name'];
+            }
+        }
+        return $casting;
+    }//end of movieCast
 
-	/**
-	 * Get Movie-translations by its TMDb-id or IMDB-id
-	 *
-	 * @param string $id						Movie TMDb-id or IMDB-id
-	 * @param const[optional] $format			Return format for this function
-	 * @return string
-	 */
-	public function getMovieTranslations($id, $format = null)
-	{
-		return $this->_makeCall('Movie.getTranslations', $id, $format);
-	}
 
-	/**
-	 * Get Latest Movie
-	 *
-	 * @param const[optional] $format			Return format for this function
-	 * @return string
-	 */
-	public function getLatestMovie($format = null)
-	{
-		return $this->_makeCall('Movie.getLatest', '', $format);
-	}
+    /**
+     * movie Crew
+     * http://api.themoviedb.org/3/movie/$id/crew
+     * @param array  movieCast
+     */
+    public function movieCrew($idMovie, $justNames = FALSE)
+    {
+        $castingTmp = $this->movieInfo($idMovie,"casts",false);
+        $crew = array();
+        if($justNames) {
+            foreach ($castingTmp['crew'] as $castArr){
+                $crew[]=array("name" => $castArr['name'], "id" => $castArr['id'], "job" => $castArr['job']);
+            }
+        }
+        else {
+            foreach ($castingTmp['crew'] as $castArr){
+                $crew[$castArr['character']]=$castArr['name'];
+            }
+        }
+        return $crew;
+    }//end of movieCrew
 
-	/**
-	 * Get Latest Person
-	 *
-	 * @param const[optional] $format			Return format for this function
-	 * @return string
-	 */
-	public function getLatestPerson($format = null)
-	{
-		return $this->_makeCall('Person.getLatest', '', $format);
-	}
+    /**
+     * Movie Info
+     * http://api.themoviedb.org/3/movie/$id
+     * @param array  movieInfo
+     */
+    public function movieInfo($idMovie,$option="",$print=false){
+        $option = (empty($option))?"":"/" . $option;
+        $params = "movie/" . $idMovie . $option;
+        $movie= $this->_call($params,"");
+        return $movie;
+    }//end of movieInfo
 
-	/**
-	 * Get Genres
-	 *
-	 * @param const[optional] $format			Return format for this function
-	 * @return string
-	 */
-	public function getGenres($format = null)
-	{
-		return $this->_makeCall('Genres.getList', '', $format);
-	}
+    /**
+     * Search Movie
+     * http://api.themoviedb.org/3/search/movie?api_keyf&language&query=future
+     * @param string  $peopleName
+     */
+    public function searchMovie($movieTitle){
+        $movieTitle="query=".urlencode($movieTitle);
+        return $this->_call("search/movie",$movieTitle,$this->_lang);
+    }//end of searchMovie
 
-	/**
-	 * Authentication: getToken
-	 *
-	 * @return string
-	 */
-	public function getToken()
-	{
-		$result = json_decode($this->_makeCall('Auth.getToken', '', null), TRUE);
-		return $result['token'];
-	}
+    /**
+     * Jobs list
+     * http://api.themoviedb.org/3/job/list
+     */
+    public function jobs(){
+        $params = "job/list";
+        $jobs= $this->_call($params,"");
+        return $jobs;
+    }//end of jobs
 
-	/**
-	 * Authentication: getSession
-	 *
-	 * @return string
-	 */
-	public function getSession($token, $format = null)
-	{
-		return $this->_makeCall('Auth.getSession', $token, $format);
-	}
 
-	/**
-	 * Add a rating to a movie
-	 *
-	 * @param string $id							TMDb-id or IDMB-id of the Movie
-	 * @param float $rating							A value between 0.0 to 10.0
-	 * @param string $session_key					Session key that you received with getSession
-	 *
-	 * @return string
-	 */
-	public function addMovieRating($id, $rating, $session_key, $format = null)
-	{
-		$params = array(
-			'id' => $id,
-			'rating' => (float) $rating,
-			'session_key' => (string) $session_key,
-		);
-		return $this->_makeCall('Movie.addRating', $params, $format, TMDB::POST);
-	}
+    /**
+     * Get Confuguration of API
+     * configuration
+     * http://api.themoviedb.org/3/configuration?apikey
+     * @return array
+     */
+    public function getConfig() {
+        return $this->_call("configuration","");
+    }//end of getConfig
 
-	/**
-	 * Makes the call to the API
-	 *
-	 * @param string $function					API specific function name for in the URL
-	 * @param string $param						Unencoded paramter for in the URL
-	 * @param const $format						Return format for this function
-	 * @return string
-	 */
-	private function _makeCall($function, $param, $format, $method = TMDB::GET)
-	{
-		$type = (!empty($format))? $format : $this->getFormat();
+    /**
+     * Latest Movie
+     * http://api.themoviedb.org/3/latest/movie?api_key
+     * @return array
+     */
+    public function latestMovie() {
+        return $this->_call('latest/movie','');
+    }
+    /**
+     * Now Playing Movies
+     * http://api.themoviedb.org/3/movie/now-playing?api_key&language&page
+     * @param integer $page
+     */
+    public function nowPlayingMovies($page=1) {
+        return $this->_call('movie/now-playing', 'page='.$page);
+    }
 
-		$params = '';
+    /**
+     * Makes the call to the API
+     *
+     * @param string $action	API specific function name for in the URL
+     * @param string $text		Unencoded paramter for in the URL
+     * @return string
+     */
+    private function _call($action,$text,$lang=""){
+        // TODO: Need to fix memcached later
+        if($this->_obj->config->item('tmdbcache')) {
+            $key = md5($action . $text);
+            $type = $this->_obj->config->item('tmdbcachetype');
+            if($key) {
+                $r = $this->_obj->cache->$type->get($key);
+                if($r !== FALSE) {
+                    return $r;
+                }
+            }
+        }
+        // # http://api.themoviedb.org/3/movie/11?api_key=XXX
+        $lang=(empty($lang))?$this->getLang():$lang;
+        $url= Tmdb::_API_URL_.$action."?api_key=".$this->getApikey()."&language=".$lang."&".$text;
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_FAILONERROR, 1);
 
-		if($method == TMDB::GET)
-		{
-			if(is_array($param) AND ! empty($param))
-			{
-				$params .= '?'.http_build_query($param);
-			}
-			elseif($param != '')
-			{
-				$arr = explode('/', $param);
-				$arr = array_map('urlencode', $arr);
-				$params .= '/'.implode('/', $arr);
-			}
+        $results = curl_exec($ch);
+        $headers = curl_getinfo($ch);
 
-			$lang = (substr($function, 0 ,strpos($function, '.')) !== 'Auth') ? '/'.$this->getLang() : '';
-			$url = TMDb::API_URL.$function.$lang.'/'.$type.'/'.$this->getApikey().$params;
-		}
-		elseif($method == TMDB::POST)
-		{
-			$params = (array) $param;
-			$params['type'] = $type;
-			$params['api_key'] = $this->getApikey();
+        $error_number = curl_errno($ch);
+        $error_message = curl_error($ch);
 
-			$url = TMDb::API_URL.$function;
-		}
+        curl_close($ch);
+        // header('Content-Type: text/html; charset=iso-8859-1');
+        $results = json_decode(($results),true);
+        if($this->_obj->config->item('tmdbcache')) {
+            $type = $this->_obj->config->item('tmdbcachetype');
+            if($key) {
+                $this->_obj->cache->$type->save($key, $results, 604800);
+            }
+        }
+        return (array) $results;
+    }//end of _call
 
-		$results = '';
 
-		if (extension_loaded('curl'))
-		{
-			$ch = curl_init();
-			curl_setopt($ch, CURLOPT_URL, $url);
-			curl_setopt($ch, CURLOPT_HEADER, 0);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-			curl_setopt($ch, CURLOPT_FAILONERROR, 1);
+} //end of class
 
-			if($method == TMDB::POST)
-			{
-				curl_setopt($ch,CURLOPT_POST, 1);
-				curl_setopt($ch,CURLOPT_POSTFIELDS, $params);
-			}
-
-			$results = curl_exec($ch);
-			$headers = curl_getinfo($ch);
-
-			$error_number = curl_errno($ch);
-			$error_message = curl_error($ch);
-
-			curl_close($ch);
-		}
-		else
-		{
-			$results = file_get_contents($url);
-		}
-
-		return (string) $results;
-	}
-
-	/**
-	 * Setter for the default return format
-	 *
-	 * @param const $format
-	 * @return void
-	 */
-	public function setFormat($format)
-	{
-		if(in_array($format, $this->_formats))
-		{
-			$this->_format = $format;
-		}
-		else
-		{
-			$this->_format = TMDb::JSON;
-		}
-	}
-
-	/**
-	 * Getter for the default return format
-	 *
-	 * @return const
-	 */
-	public function getFormat()
-	{
-		return $this->_format;
-	}
-
-	/**
-	 * Setter for the default language
-	 *
-	 * @param string $lang
-	 * @return void
-	 */
-	public function setLang($lang)
-	{
-		$this->_lang = $lang;
-	}
-
-	/**
-	 * Getter for the default language
-	 *
-	 * @return string
-	 */
-	public function getLang()
-	{
-		return $this->_lang;
-	}
-
-	/**
-	 * Setter for the API-key
-	 *
-	 * @param string $apikey
-	 * @return void
-	 */
-	public function setApikey($apikey)
-	{
-		$this->_apikey = (string) $apikey;
-	}
-
-	/**
-	 * Getter for the API-key
-	 *
-	 * @return string
-	 */
-	public function getApikey()
-	{
-		return $this->_apikey;
-	}
-}
 ?>
