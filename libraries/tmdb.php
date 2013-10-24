@@ -27,11 +27,8 @@ class Tmdb{
         // Load config file
         $this->_obj =& get_instance();
         $this->_obj->load->config('tmdb');
-
-        if($this->_obj->config->item('tmdbcache')) {
-            // Cache need to be fixed
-            $this->_obj->load->driver('cache');
-        }
+        // Cache need to be fixed
+        $this->_obj->load->driver('cache');
 
         //Assign Api Key
         $this->setApikey($this->_obj->config->item('tmdbapi'));
@@ -270,17 +267,6 @@ class Tmdb{
      * @return string
      */
     private function _call($action,$text,$lang=""){
-        // TODO: Need to fix memcached later
-        if($this->_obj->config->item('tmdbcache')) {
-            $key = md5($action . $text);
-            $type = $this->_obj->config->item('tmdbcachetype');
-            if($key) {
-                $r = $this->_obj->cache->$type->get($key);
-                if($r !== FALSE) {
-                    return $r;
-                }
-            }
-        }
         // # http://api.themoviedb.org/3/movie/11?api_key=XXX
         $lang=(empty($lang))?$this->getLang():$lang;
         $url= Tmdb::_API_URL_.$action."?api_key=".$this->getApikey()."&language=".$lang."&".$text;
