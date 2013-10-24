@@ -228,8 +228,13 @@ class Tmdb{
      * http://api.themoviedb.org/3/search/movie?api_keyf&language&query=future
      * @param string  $peopleName
      */
-    public function searchMovie($movieTitle){
-        $movieTitle="query=".urlencode($movieTitle);
+    public function searchMovie($movieTitle, $year = false){
+    	if(!$year) {
+        	$movieTitle="query=".urlencode($movieTitle);
+		}
+		else {
+			$movieTitle="query=".urlencode($movieTitle) . "&year=".urlencode($year);
+		}
         return $this->_call("search/movie",$movieTitle,$this->_lang);
     }//end of searchMovie
 
