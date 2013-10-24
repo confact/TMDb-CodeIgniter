@@ -301,12 +301,6 @@ class Tmdb{
         curl_close($ch);
         // header('Content-Type: text/html; charset=iso-8859-1');
         $results = json_decode(($results),true);
-        if($this->_obj->config->item('tmdbcache')) {
-            $type = $this->_obj->config->item('tmdbcachetype');
-            if($key) {
-                $this->_obj->cache->$type->save($key, $results, 604800);
-            }
-        }
         return (array) $results;
     }//end of _call
 
