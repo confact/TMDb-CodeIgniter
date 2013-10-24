@@ -285,8 +285,7 @@ class Tmdb{
      */
     private function _call($action,$text,$lang=""){
         // # http://api.themoviedb.org/3/movie/11?api_key=XXX
-        $lang=(empty($lang))?$this->getLang():$lang;
-        $url= Tmdb::_API_URL_.$action."?api_key=".$this->getApikey()."&language=".$lang."&".$text;
+        $url= Tmdb::_API_URL_.$action."?api_key=".$this->getApikey()."&".$text;
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HEADER, 0);
