@@ -152,7 +152,19 @@ class Tmdb{
         $posters = $this->movieInfo($idMovie,"images",false);
         $posters =$posters['posters'];
         return $posters;
-    }//end of
+    }//end of movie Poster
+    
+    /**
+     * movie Backdrops
+     * http://api.themoviedb.org/3/movie/$id/images
+     * @param array  moviePoster
+     */
+    public function movieBackdrops($idMovie)
+    {
+        $posters = $this->movieInfo($idMovie,"images",false);
+        $posters =$posters['backdrops'];
+        return $posters;
+    }//end of movie Backdrops
 
     /**
      * movie Casting
