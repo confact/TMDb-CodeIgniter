@@ -18,6 +18,78 @@ If you want to use this class with Codeigniter will you need to do some tweaks a
 - cURL
 - TMDb API-key
 
+## Available methods ##
+
+All methods are listed here, for use, look into the code, everything is documentated. Optional parameters are between brackets []. Also look into the TMDb-documentation for better unstanding of the possible methods.
+
+### Collection ###
+
+- getCollection($id, [$lang])
+
+### Company ###
+
+- searchCompany($query, [$page])
+- getMoviesByCompany($id, [$page], [$lang])
+
+### Genres ###
+
+- getGenres([$lang])
+- getMoviesByGenre($id, [$page], [$lang])
+
+### Movies ###
+
+- searchMovie($query, [$page], [$adult], [$lang])
+- getMovie($id, [$lang])
+- getMovieCast($id)
+- getMovieImages($id, [$lang])
+- getMovieKeywords($id)
+- getMovieReleases($id)
+- getMovieTitles($id, [$country])
+- getMovieTrailers($id, [$lang])
+- getMovieTranslations($id)
+- getMoviesByCompany($id, [$page], [$lang])
+- getMoviesByGenre($id, [$page], [$lang])
+- getLatestMovie()
+- getTopRatedMovies([$page], [$lang])
+- getPopularMovies([$page], [$lang])
+- getUpcomingMovies([$page], [$lang])
+- getNowPlayingMovies([$page], [$lang])
+- getSimularMovies($id, [$page], [$lang])
+- getChangedMovies([$page], [$start_date], [$end_date])
+- getMovieChanges($id)
+
+### Persons ###
+
+- searchPerson($query, [$page], [$adult])
+- getPerson($id)
+- getPersonCredits($id, [$lang])
+- getPersonImages($id)
+- getChangedPersons([$page], [$start_date], [$end_date])
+- getPersonChanges($id)
+
+### Authentication ###
+
+- getAuthToken()
+- getAuthSession($token)
+- setAuthSession($id)
+
+### Account ###
+
+- addFavoriteMovie($account_id, $session_id, $movie_id, TRUE)
+- addMovieRating($session_id, $movie_id, $value)
+- addMovieToWatchlist($account_id, $session_id, $movie_id)
+- getAccount($session_id)
+- getAccountFavoriteMovies($account_id, $session_id, [$page], [$lang])
+- getAccountRatedMovies($account_id, $session_id, [$page], [$lang])
+- getAccountWatchlistMovies($account_id, $session_id, [$page], [$lang])
+
+### Misc ###
+
+- getAvailableImageSizes($imagetype)
+- getConfiguration()
+- getImageUrl($filepath, $imagetype, $size)
+- getVersion($uri)
+
 ## How to use ##
 
 ### Initialize the class ###
